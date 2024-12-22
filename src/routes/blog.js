@@ -309,4 +309,64 @@ blogRouter.post("/blog/like/:id", userAuth, async (req, res) => {
     });
   }
 });
+blogRouter.get("/blog/getLikes/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
+
+    console.log(id);
+
+    // Find the blog and populate the 'likes' field with user details
+    const blogData = await blog.aggregate([
+      {
+        $lookup: {
+          from: "users",
+          localField: "likes",
+          foreignField: "_id",
+          as: "userLikes",
+        },
+      },
+      {
+        $match: {
+          _id: new mongoose.Types.ObjectId(id),
+        },
+      },
+      {
+        $project: {
+          userLikes: {
+            firstName: 1,
+            lastName: 1,
+          },
+          totalLikes: { $size: "$likes" }, // Directly calculate totalLikes in the aggregation pipeline
+        },
+      },
+    ]);
+
+    // Check if the blog post exists
+    if (blogData.length === 0) {
+      return res.status(404).json({
+        message: "Blog Not Found...!",
+        status: false,
+        statusCode: 404,
+      });
+    }
+
+    res.status(200).json({
+      message: "Likes retrieved successfully!",
+      status: true,
+      statusCode: 200,
+      data: blogData[0],
+      totalLikes: blogData[0].totalLikes, // Directly return the calculated totalLikes
+    });
+  } catch (error) {
+    console.error("Error retrieving likes:", error);
+
+    res.status(500).json({
+      message: "Something Went Wrong...!",
+      status: false,
+      statusCode: 500,
+      error: error.message,
+    });
+  }
+});
+
 module.exports = blogRouter;
