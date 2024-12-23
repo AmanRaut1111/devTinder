@@ -121,5 +121,59 @@ commentRouter.delete("/comment/delete/:id", userAuth, async (req, res) => {
     });
   }
 });
+commentRouter.put("/comment/update/:id", userAuth, async (req, res) => {
+  const loggedInUser = req.user;
+  const comment = req.body.comment;
+  const commentId = req.params.id;
+  try {
+    const commentData = await commentModel.findById(commentId);
+    if (!commentData) {
+      return res.status(403).json({
+        message: "Comment Not Found..!",
+        status: false,
+        statsusCode: 403,
+      });
+    }
+
+    if (commentData.userId.toString() !== loggedInUser._id.toString()) {
+      return res.status(403).json({
+        message: "You are not authorized to Edit this comment.",
+        status: false,
+        statusCode: 403,
+      });
+    }
+
+    const updateComent = await commentModel.findByIdAndUpdate(
+      commentId,
+      {
+        $set: { comment, updatedAt: new Date() },
+      },
+      { new: true }
+    );
+
+    if (updateComent) {
+      res.status(200).json({
+        message: "Comment Updated Sucessfully...!",
+        status: true,
+        statsusCode: 200,
+        data: updateComent,
+      });
+    } else {
+      res.status(400).json({
+        message: "Something Went wrong...!",
+        status: false,
+        statsusCode: 400,
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      message: "Internal server error",
+      status: false,
+      statusCode: 500,
+      error: error.message,
+    });
+  }
+});
 
 module.exports = commentRouter;
