@@ -4,10 +4,12 @@ const mongoose = require("mongoose");
 const commentSchema = mongoose.Schema({
   blogId: {
     type: mongoose.Schema.Types.ObjectId,
+    ref: "Blog", // Referencing the Blog collection
     required: true,
   },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
+    ref: "User", // Referencing the User collection
     required: true,
   },
   comment: {
@@ -15,7 +17,7 @@ const commentSchema = mongoose.Schema({
     required: true,
   },
 
-  createdAt: {
+  commentOn: {
     type: Date,
     default: new Date(),
   },

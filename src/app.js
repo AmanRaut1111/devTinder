@@ -9,6 +9,7 @@ const profileRouter = require("./routes/profile");
 const requestRouter = require("./routes/request");
 const userRouter = require("./routes/user");
 const blogRouter = require("./routes/blog");
+const commentRouter = require("./routes/comment");
 
 const app = express();
 app.use(express.json({ limit: "10mb" })); // Set the limit to 10MB (adjust as needed)
@@ -34,6 +35,7 @@ app.use("/", profileRouter);
 app.use("/", requestRouter);
 app.use("/", userRouter);
 app.use("/", blogRouter);
+app.use("/", commentRouter);
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
