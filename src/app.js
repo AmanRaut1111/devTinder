@@ -1,4 +1,5 @@
 const express = require("express");
+
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
 const connectDB = require("../src/config/db");
@@ -12,6 +13,7 @@ const blogRouter = require("./routes/blog");
 const commentRouter = require("./routes/comment");
 
 const app = express();
+
 app.use(express.json({ limit: "10mb" })); // Set the limit to 10MB (adjust as needed)
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
 app.use(cookieParser());

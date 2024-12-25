@@ -1,5 +1,6 @@
 const express = require("express");
 const blog = require("../model/blog");
+
 const { userAuth } = require("../middleware/auth");
 const { default: mongoose } = require("mongoose");
 const { status } = require("express/lib/response");
@@ -284,6 +285,9 @@ blogRouter.post("/blog/like/:id", userAuth, async (req, res) => {
         { _id: id },
         { $addToSet: { likes: loggedInUser._id } }
       );
+      const updatedBlog = await blog.findById(id); // Fetch the updated blog
+
+      // Emit the event to notify all clients
 
       return res.status(200).json({
         message: "Blog Has been Liked..!",
