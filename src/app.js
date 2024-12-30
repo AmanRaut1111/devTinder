@@ -1,4 +1,6 @@
 const express = require("express");
+const http = require("http");
+const { Server } = require("socket.io");
 
 const cookieParser = require("cookie-parser");
 const cors = require("cors");
@@ -13,6 +15,10 @@ const blogRouter = require("./routes/blog");
 const commentRouter = require("./routes/comment");
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
+
+app.set("io", io);
 
 app.use(express.json({ limit: "10mb" })); // Set the limit to 10MB (adjust as needed)
 app.use(express.urlencoded({ limit: "10mb", extended: true }));
@@ -47,9 +53,10 @@ app.use((err, req, res, next) => {
 });
 
 app.get("/", (req, res) => {
-  res.send("Hello JS");
-});
+  console.log(globalThis === global);
 
+  res.send("jd");
+});
 connectDB()
   .then(() => {
     console.log("Database Connected");

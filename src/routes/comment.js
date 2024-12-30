@@ -52,6 +52,11 @@ commentRouter.post("/comment/add/:id", userAuth, async (req, res) => {
 
     const commentData = await newComment.save();
     if (commentData) {
+      const io = req.app.get("io");
+      io.emit("newComment", {
+        blogId,
+        comment: commentData,
+      });
       res.status(200).json({
         message: "Comment Add Sucessfully...!",
         status: true,
