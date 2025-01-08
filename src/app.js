@@ -53,15 +53,13 @@ app.use((err, req, res, next) => {
 });
 
 app.get("/", (req, res) => {
-  console.log(globalThis === global);
-
-  res.send("jd");
+  res.send("Welcome to DevTinder");
 });
 connectDB()
   .then(() => {
     console.log("Database Connected");
 
-    app.listen(process.env.PORT, () => {
+    app.listen(3000, () => {
       console.log("server is listening On Port 3000");
     });
   })
