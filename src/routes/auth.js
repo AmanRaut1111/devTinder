@@ -7,35 +7,78 @@ const { validsignupData } = require("../utils/validation");
 const { status } = require("express/lib/response");
 const authRouter = express.Router();
 const nodemailer = require("nodemailer");
-const sendEmail = require("../service/sendEmail");
+const { sendLoginEmail, sendWelcomeEmail } = require("../service/sendEmail");
 dotenv.config();
 
 authRouter.post("/signup", async (req, res) => {
   const { firstName, lastName, emailId, password } = req.body;
+
   try {
+    // Validate signup data
     validsignupData(req);
+
+    // Check if the user already exists
+    const existingUser = await User.findOne({ emailId });
+    if (existingUser) {
+      return res.status(400).json({
+        message: "Email already in use. Please use a different email.",
+        status: false,
+        statusCode: 400,
+      });
+    }
+
+    // Hash the user's password
     const hashPassword = await bcrypt.hash(password, 10);
+
+    // Create a new user
     const user = new User({
       firstName,
       lastName,
       emailId,
       password: hashPassword,
     });
+
+    // Save the user to the database
     const saveUser = await user.save();
+
+    // Generate a JWT token
     const token = jwt.sign({ _id: saveUser._id }, process.env.JWT_SECRET, {
       expiresIn: process.env.JWT_EXPIRESIN,
     });
 
-    res.cookie("token", token, { maxAge: 45 * 60 * 1000 });
-    res.status(200).json({
-      message: "User Signup Sucessfully",
-      status: true,
-      statusCode: 200,
-      data: saveUser,
+    // Set the JWT token as a cookie
+    res.cookie("token", token, {
+      httpOnly: true,
+      maxAge: 45 * 60 * 1000, // 45 minutes
     });
+
+    // Send a response before sending the email
+    res.status(201).json({
+      message: "User signed up successfully.",
+      status: true,
+      statusCode: 201,
+      data: {
+        id: saveUser._id,
+        firstName: saveUser.firstName,
+        lastName: saveUser.lastName,
+        emailId: saveUser.emailId,
+      },
+    });
+
+    // Send the welcome email asynchronously
+    try {
+      await sendWelcomeEmail(saveUser.emailId, saveUser.firstName);
+    } catch (emailError) {
+      console.error("Error sending welcome email:", emailError.message);
+    }
   } catch (error) {
-    res.send("something went Wrong" + error.message);
-    console.log(error);
+    console.error("Signup error:", error.message);
+    return res.status(400).json({
+      message: "Signup failed.",
+      status: false,
+      statusCode: 400,
+      error: error.message,
+    });
   }
 });
 
@@ -88,7 +131,7 @@ authRouter.post("/login", async (req, res) => {
     });
 
     // Asynchronously send login email
-    sendEmail(user.emailId, user.firstName)
+    sendLoginEmail(user.emailId, user.firstName)
       .then(() => console.log("Email sent successfully"))
       .catch((error) => console.error("Error sending email:", error.message));
   } catch (error) {

@@ -15,7 +15,7 @@ if (
   );
 }
 
-const sendEmail = async (userEmail, userName) => {
+const sendLoginEmail = async (userEmail, userName) => {
   try {
     // Create transporter object using SMTP service
     const transporter = nodemailer.createTransport({
@@ -115,4 +115,94 @@ Aman Raut
   }
 };
 
-module.exports = sendEmail;
+const sendWelcomeEmail = async (userEmail, userName) => {
+  try {
+    // Create transporter object using SMTP service
+    const transporter = nodemailer.createTransport({
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false, // Use TLS
+      auth: {
+        user: process.env.EMAIL_USER, // Email address
+        pass: process.env.EMAIL_PASS, // App password if using Gmail
+      },
+    });
+
+    // Email content options
+    const mailOptions = {
+      from: process.env.EMAIL_USER, // Sender address
+      to: userEmail, // Recipient address
+      subject: "Welcome to DevTinder!", // Subject line
+      text: `Hello ${userName},
+
+Welcome to DevTinder! We're thrilled to have you join our community.
+
+If you have any questions, feel free to reach out to us at ${process.env.SUPPORT_EMAIL}.
+
+Best regards,
+Aman Raut
+(DevTinder Team)`,
+      html: `<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome Email</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      background-color: #fff;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      max-width: 600px;
+      margin: auto;
+    }
+    h1 {
+      color: #2c3e50;
+    }
+    p {
+      font-size: 16px;
+      line-height: 1.6;
+    }
+    .footer {
+      font-size: 12px;
+      color: #7f8c8d;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Welcome to DevTinder, ${userName}!</h1>
+    <p>We're thrilled to have you join our community. Explore exciting features and connect with like-minded individuals.</p>
+    <p>If you have any questions, feel free to reach out at <a href="mailto:${process.env.SUPPORT_EMAIL}">${process.env.SUPPORT_EMAIL}</a>.</p>
+    <div class="footer">
+      <p>Best regards,</p>
+      <p>Aman Raut <br>(DevTinder Team)</p>
+    </div>
+  </div>
+</body>
+</html>`,
+    };
+
+    // Send email and log response
+    const info = await transporter.sendMail(mailOptions);
+
+    return {
+      messageId: info.messageId,
+      accepted: info.accepted,
+      rejected: info.rejected,
+    };
+  } catch (error) {
+    console.error("Error sending email:", error.message);
+    throw new Error(`Email sending failed: ${error.message}`);
+  }
+};
+
+module.exports = { sendLoginEmail, sendWelcomeEmail };
