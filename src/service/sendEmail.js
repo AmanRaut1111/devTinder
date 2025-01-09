@@ -1,23 +1,38 @@
 const nodemailer = require("nodemailer");
 const dotenv = require("dotenv");
+
+// Load environment variables
 dotenv.config();
+
+// Ensure that necessary environment variables are provided
+if (
+  !process.env.EMAIL_USER ||
+  !process.env.EMAIL_PASS ||
+  !process.env.SUPPORT_EMAIL
+) {
+  throw new Error(
+    "Missing required environment variables: EMAIL_USER, EMAIL_PASS, SUPPORT_EMAIL."
+  );
+}
 
 const sendEmail = async (userEmail, userName) => {
   try {
+    // Create transporter object using SMTP service
     const transporter = nodemailer.createTransport({
       host: "smtp.gmail.com",
       port: 587,
       secure: false, // Use TLS
       auth: {
-        user: process.env.EMAIL_USER, // Ensure this is set in your environment
+        user: process.env.EMAIL_USER, // Email address
         pass: process.env.EMAIL_PASS, // App password if using Gmail
       },
     });
 
+    // Email content options
     const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: userEmail,
-      subject: "Login Notification",
+      from: process.env.EMAIL_USER, // Sender address
+      to: userEmail, // Recipient address
+      subject: "Login Notification", // Subject line
       text: `Hello ${userName},
 
 We wanted to notify you that you have successfully logged into your account. If this wasn't you, we recommend updating your password immediately for security purposes.
@@ -78,8 +93,7 @@ Aman Raut
     <a href="https://yourdomain.com/contact-support" class="btn">Contact Support</a>
     <div class="footer">
       <p>Best regards,</p>
-      <p>Aman Raut <br>
-      (DevTinder Team)</p>
+      <p>Aman Raut <br>(DevTinder Team)</p>
       <p>For inquiries, email us at <a href="mailto:${process.env.SUPPORT_EMAIL}">${process.env.SUPPORT_EMAIL}</a>.</p>
     </div>
   </div>
@@ -87,6 +101,7 @@ Aman Raut
 </html>`,
     };
 
+    // Send email and log response
     const info = await transporter.sendMail(mailOptions);
     console.log("Email sent successfully:", info.messageId);
 
@@ -96,7 +111,7 @@ Aman Raut
       rejected: info.rejected,
     };
   } catch (error) {
-    console.error("Email sending failed:", error.message);
+    console.error("Error sending email:", error.message);
     throw new Error(`Email sending failed: ${error.message}`);
   }
 };

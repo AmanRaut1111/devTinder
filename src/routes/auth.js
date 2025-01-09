@@ -22,8 +22,8 @@ authRouter.post("/signup", async (req, res) => {
       password: hashPassword,
     });
     const saveUser = await user.save();
-    const token = jwt.sign({ _id: saveUser._id }, "devTinder", {
-      expiresIn: "1d",
+    const token = jwt.sign({ _id: saveUser._id }, process.env.JWT_SECRET, {
+      expiresIn: process.env.JWT_EXPIRESIN,
     });
 
     res.cookie("token", token, { maxAge: 45 * 60 * 1000 });

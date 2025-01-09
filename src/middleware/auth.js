@@ -6,15 +6,13 @@ const userAuth = async (req, res, next) => {
     const cookieData = req.cookies;
 
     if (!cookieData.token) {
-      return res
-        .status(401)
-        .json({
-          message: "UnAuthorized Please LogIn",
-          status: false,
-          statusCode: 401,
-        });
+      return res.status(401).json({
+        message: "UnAuthorized Please LogIn",
+        status: false,
+        statusCode: 401,
+      });
     }
-    const decoded = jwt.verify(cookieData.token, "devTinder");
+    const decoded = jwt.verify(cookieData.token, process.env.JWT_SECRET);
     const user = await User.findById(decoded._id);
     if (!user) {
       throw new Error("unAuthorized");

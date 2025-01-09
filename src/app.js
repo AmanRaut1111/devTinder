@@ -1,4 +1,5 @@
 const express = require("express");
+const dotenv = require("dotenv");
 const http = require("http");
 const { Server } = require("socket.io");
 
@@ -59,7 +60,7 @@ connectDB()
   .then(() => {
     console.log("Database Connected");
 
-    app.listen(3000, () => {
+    app.listen(process.env.PORT, () => {
       console.log("server is listening On Port 3000");
     });
   })
