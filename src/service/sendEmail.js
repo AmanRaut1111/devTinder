@@ -5,30 +5,28 @@ dotenv.config();
 const sendEmail = async (userEmail, userName) => {
   try {
     const transporter = nodemailer.createTransport({
-      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false, // Use TLS
       auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
+        user: process.env.EMAIL_USER, // Ensure this is set in your environment
+        pass: process.env.EMAIL_PASS, // App password if using Gmail
       },
     });
 
     const mailOptions = {
-      from: process.env.EMAIL_USER, // Sender address
-      to: userEmail, // Recipient address
-      subject: "Login Notification", // Subject line
+      from: process.env.EMAIL_USER,
+      to: userEmail,
+      subject: "Login Notification",
       text: `Hello ${userName},
 
 We wanted to notify you that you have successfully logged into your account. If this wasn't you, we recommend updating your password immediately for security purposes.
-
-If you need any assistance or have questions, feel free to contact our support team.
 
 Thank you for using our service!
 
 Best regards,
 Aman Raut 
-(DevTinder Team)
-[Your Contact Information]`, // Plain text body
-
+(DevTinder Team)`,
       html: `<html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -76,26 +74,30 @@ Aman Raut
   <div class="container">
     <h1>Hello ${userName},</h1>
     <p>We wanted to notify you that you have successfully logged into your account on our platform. If this wasn't you, we strongly recommend updating your password immediately to ensure your account remains secure.</p>
-    <p>If you need any assistance or have questions, please don't hesitate to reach out to our support team. We're here to help!</p>
     <p>Thank you for using our service!</p>
-    <a href="amanraut1111" class="btn">Contact Support</a>
+    <a href="https://yourdomain.com/contact-support" class="btn">Contact Support</a>
     <div class="footer">
       <p>Best regards,</p>
       <p>Aman Raut <br>
-(DevTinder Team)</strong></p>
-      <p>For inquiries, email us at <a href="mailto:support@yourcompany.com">amanraut1111@gmail.com</a>.</p>
+      (DevTinder Team)</p>
+      <p>For inquiries, email us at <a href="mailto:${process.env.SUPPORT_EMAIL}">${process.env.SUPPORT_EMAIL}</a>.</p>
     </div>
   </div>
 </body>
-</html>`, // HTML body
+</html>`,
     };
 
     const info = await transporter.sendMail(mailOptions);
+    console.log("Email sent successfully:", info.messageId);
 
-    return info;
+    return {
+      messageId: info.messageId,
+      accepted: info.accepted,
+      rejected: info.rejected,
+    };
   } catch (error) {
-    console.error("Email error:", error);
-    throw new Error(error);
+    console.error("Email sending failed:", error.message);
+    throw new Error(`Email sending failed: ${error.message}`);
   }
 };
 

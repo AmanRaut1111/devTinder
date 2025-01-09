@@ -43,43 +43,67 @@ authRouter.post("/login", async (req, res) => {
   try {
     const { emailId, password } = req.body;
 
+    // Check if user exists
     const user = await User.findOne({ emailId });
     if (!user) {
       return res.status(400).json({
         message: "Invalid Credentials",
-        status: true,
-        statusCode: 200,
+        status: false,
+        statusCode: 400,
       });
     }
 
+    // Verify password
     const checkPassword = await bcrypt.compare(password, user.password);
-    if (checkPassword) {
-      const token = jwt.sign({ _id: user._id }, "devTinder", {
-        expiresIn: "1d",
-      });
-
-      res.cookie("token", token, { maxAge: 45 * 60 * 1000 });
-      res.status(200).json({
-        message: `${user.firstName} Login Successfully!`,
-        status: true,
-        statusCode: 200,
-        data: user,
-      });
-
-      // Send email
-      const sendingLogginEmail = await sendEmail(user.emailId, user.firstName);
-    } else {
+    if (!checkPassword) {
       return res.status(400).json({
         message: "Invalid Credentials",
-        status: true,
-        statusCode: 200,
+        status: false,
+        statusCode: 400,
       });
     }
+
+    // Generate token
+    const token = jwt.sign(
+      { _id: user._id },
+      process.env.JWT_SECRET || "devTinder",
+      {
+        expiresIn: "1d",
+      }
+    );
+
+    // Set cookie
+    res.cookie("token", token, {
+      maxAge: 45 * 60 * 1000, // 45 minutes
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // Secure cookie in production
+    });
+
+    // Send response immediately
+    res.status(200).json({
+      message: `${user.firstName} Login Successfully!`,
+      status: true,
+      statusCode: 200,
+      data: { id: user._id, firstName: user.firstName, emailId: user.emailId },
+    });
+
+    // Asynchronously send login email
+    sendEmail(user.emailId, user.firstName)
+      .then(() => console.log("Email sent successfully"))
+      .catch((error) => console.error("Error sending email:", error.message));
   } catch (error) {
-    console.error("Error:", error);
-    res.status(400).send("Something went wrong: " + error.message);
+    console.error("Error in login route:", error);
+    if (!res.headersSent) {
+      res.status(500).json({
+        message: "Something went wrong",
+        status: false,
+        statusCode: 500,
+        error: error.message,
+      });
+    }
   }
 });
+
 authRouter.post("/logout", (req, res) => {
   try {
     res.clearCookie("token"); // Clears the token cookie
