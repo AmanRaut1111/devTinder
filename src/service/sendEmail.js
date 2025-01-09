@@ -103,7 +103,6 @@ Aman Raut
 
     // Send email and log response
     const info = await transporter.sendMail(mailOptions);
-    console.log("Email sent successfully:", info.messageId);
 
     return {
       messageId: info.messageId,
