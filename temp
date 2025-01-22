@@ -1,3 +1,5 @@
 const str = "blogImage/cueudoawk6wr56pidzct.png";
 
 console.log(str.split(".")[1]);
+
+console.log("hello");

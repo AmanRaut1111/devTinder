@@ -8,6 +8,7 @@ const { status } = require("express/lib/response");
 const authRouter = express.Router();
 const nodemailer = require("nodemailer");
 const { sendLoginEmail, sendWelcomeEmail } = require("../service/sendEmail");
+const sendWhatsAppMessage = require("../service/sendWhatsappMessage");
 dotenv.config();
 
 authRouter.post("/signup", async (req, res) => {
@@ -68,6 +69,7 @@ authRouter.post("/signup", async (req, res) => {
     // Send the welcome email asynchronously
     try {
       await sendWelcomeEmail(saveUser.emailId, saveUser.firstName);
+      sendWhatsAppMessage(saveUser.firstName, saveUser.lastName);
     } catch (emailError) {
       console.error("Error sending welcome email:", emailError.message);
     }
@@ -110,30 +112,33 @@ authRouter.post("/login", async (req, res) => {
     const token = jwt.sign(
       { _id: user._id },
       process.env.JWT_SECRET || "devTinder",
-      {
-        expiresIn: "1d",
-      }
+      { expiresIn: "1d" }
     );
 
     // Set cookie
     res.cookie("token", token, {
-      maxAge: 45 * 60 * 1000, // 45 minutes
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // Secure cookie in production
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+      httpOnly: true, // Make the cookie inaccessible from JavaScript
+      secure: process.env.NODE_ENV === "production", // Ensure cookie is sent over HTTPS
+      sameSite: "Strict", // Helps prevent CSRF
     });
 
-    // Send response immediately
+    // Send success response
     res.status(200).json({
       message: `${user.firstName} Login Successfully!`,
       status: true,
       statusCode: 200,
-      data: { id: user._id, firstName: user.firstName, emailId: user.emailId },
+      data: {
+        id: user._id,
+        firstName: user.firstName,
+        emailId: user.emailId,
+      },
     });
 
-    // Asynchronously send login email
-    sendLoginEmail(user.emailId, user.firstName)
-      .then(() => console.log("Email sent successfully"))
-      .catch((error) => console.error("Error sending email:", error.message));
+    // Optionally send login email (uncomment and configure as needed)
+    // sendLoginEmail(user.emailId, user.firstName)
+    //   .then(() => console.log("Email sent successfully"))
+    //   .catch((error) => console.error("Error sending email:", error.message));
   } catch (error) {
     console.error("Error in login route:", error);
     if (!res.headersSent) {
@@ -149,13 +154,22 @@ authRouter.post("/login", async (req, res) => {
 
 authRouter.post("/logout", (req, res) => {
   try {
-    res.clearCookie("token"); // Clears the token cookie
+    // Clear the token cookie from the client's browser
+    res.clearCookie("token", {
+      path: "/", // Ensures that the cookie is cleared from the root path
+      httpOnly: true, // Ensures that the cookie is not accessible through JavaScript
+      secure: process.env.NODE_ENV === "production", // Set to true in production (HTTPS)
+      sameSite: "Strict", // Ensures the cookie is sent only in a first-party context
+    });
+
+    // Send success response
     res.status(200).json({
-      message: "Logout Sucessfully...!",
+      message: "Logout successfully!",
       status: true,
       statusCode: 200,
     });
   } catch (error) {
+    console.error(error);
     res.status(500).send("An error occurred during logout.");
   }
 });

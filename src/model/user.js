@@ -9,6 +9,7 @@ const userSchema = mongoose.Schema(
     lastName: {
       type: String,
     },
+
     emailId: {
       type: String,
       lowercase: true,
@@ -45,6 +46,10 @@ const userSchema = mongoose.Schema(
     },
     skills: {
       type: [String],
+    },
+    ispremium: {
+      type: Boolean,
+      default: false,
     },
   },
   { timestamps: true }

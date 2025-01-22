@@ -5,16 +5,24 @@ const { status } = require("express/lib/response");
 
 const profileRouter = express.Router();
 profileRouter.get("/profile", userAuth, async (req, res) => {
-  const cookieData = req.cookies;
   try {
     const user = req.user;
 
-    res.send(user);
+    if (!user) {
+      return res
+        .status(401)
+        .json({ message: "Unauthorized: User not authenticated" });
+    }
+
+    res.json(user); // Send back user data
   } catch (error) {
-    console.log(error);
-    res.send("Something Went Wrong " + error.message);
+    console.error(error);
+    res
+      .status(500)
+      .json({ message: "Something Went Wrong", error: error.message });
   }
 });
+
 profileRouter.patch("/profile/edit", userAuth, async (req, res) => {
   try {
     if (!validateEditProfileData(req)) {
